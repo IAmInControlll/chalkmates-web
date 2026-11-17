@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import Scribble from '../components/Scribble.astro';
+import PolicyText from '../components/PolicyText.astro';
+import { PRIVACY_SECTIONS, PRIVACY_UPDATED } from '../content/privacy';
+---
+
+<Base title="Privacy policy · Chalkmates" description="What Chalkmates stores, who can see it and how to delete it." current="privacy">
+  <Fragment slot="board">
+    <svg class="doodle" viewBox="0 0 74 74" aria-hidden="true">
+      <path d="M37 62C14 46 8 34 11 24c3-10 16-14 26-2 10-12 23-8 26 2 3 10-3 22-26 38z" fill="none" stroke="#f7a8c4" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M20 26c2-4 6-6 9-5" fill="none" stroke="#f4f1ea" stroke-width="2.5" stroke-linecap="round" opacity=".7"></path>
+    </svg>
+    <h1 class="chalk">Privacy policy</h1>
+    <Scribble />
+    <p class="sub">Last updated {PRIVACY_UPDATED}</p>
+  </Fragment>
+  <article class="prose">
+    {
+      PRIVACY_SECTIONS.map((s) => (
+        <>
+          <h2>{s.title}</h2>
+          <PolicyText body={s.body} />
+        </>
+      ))
+    }
+  </article>
+</Base>

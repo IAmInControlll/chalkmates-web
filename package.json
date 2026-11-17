@@ -1,0 +1,25 @@
+{
+  "name": "chalkmates-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website for Chalkmates: privacy policy, account deletion, and later the marketing site.",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "sync:privacy": "node scripts/sync-privacy.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IAmInControlll/chalkmates-web.git"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@fontsource/nunito": "^5.2.0",
+    "@fontsource/patrick-hand": "^5.2.0",
+    "astro": "^7.2.2",
+    "typescript": "^6.0.3"
+  }
+}

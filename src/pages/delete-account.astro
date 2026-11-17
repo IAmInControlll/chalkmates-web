@@ -1,0 +1,145 @@
+---
+import Base from '../layouts/Base.astro';
+import Scribble from '../components/Scribble.astro';
+import PolicyText from '../components/PolicyText.astro';
+import { PRIVACY_CONTACT, PRIVACY_SECTIONS } from '../content/privacy';
+
+const deleting = PRIVACY_SECTIONS.find((s) => s.title === 'Deleting your data');
+if (!deleting) throw new Error('privacy.ts has no “Deleting your data” section');
+if (!import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_KEY) {
+  throw new Error('PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_KEY are needed (see .env.example)');
+}
+---
+
+<Base
+  title="Delete your account · Chalkmates"
+  description="How to delete your Chalkmates account and the data that goes with it."
+  current="delete"
+  noindex
+>
+  <Fragment slot="board">
+    <h1 class="chalk">Delete your account</h1>
+    <Scribble />
+    <p class="sub">In the app, or right here.</p>
+  </Fragment>
+  <div class="prose">
+    <div class="card">
+      <h2>In the app</h2>
+      <ol class="steps">
+        <li>Open Chalkmates and tap your picture to open your <strong>Profile</strong>.</li>
+        <li>Tap <strong>Delete account</strong> and confirm.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Here, without the app</h2>
+      <form id="sign-in" novalidate>
+        <p class="muted">Sign in with the email and password you use in Chalkmates. Nothing is deleted until you confirm on the next step.</p>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <button class="btn" type="submit">Continue</button>
+        <p class="msg error" id="sign-in-msg" role="alert" hidden></p>
+      </form>
+      <div id="confirm" hidden>
+        <p>Signed in as <strong id="who"></strong>. Deleting your account can’t be undone.</p>
+        <button class="btn danger" id="delete" type="button">Delete my account</button><button class="btn plain" id="cancel" type="button">Cancel</button>
+        <p class="msg error" id="confirm-msg" role="alert" hidden></p>
+      </div>
+      <p class="done" id="done" hidden>Your account is deleted. Thanks for drawing with us.</p>
+    </div>
+    <h2>What gets deleted</h2>
+    <PolicyText body={deleting.body} />
+    <h2>Can’t sign in?</h2>
+    <p>
+      Reset your password from the sign-in screen in the app, or email <a href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a> from the address
+      you signed up with and we’ll delete your account for you.
+    </p>
+  </div>
+</Base>
+
+<script>
+  // Signs in with email and password, then calls the same `delete_account` RPC as the app's
+  // Profile → Delete account. Plain fetch against Supabase's REST endpoints, no client library.
+  const url = import.meta.env.PUBLIC_SUPABASE_URL;
+  const key = import.meta.env.PUBLIC_SUPABASE_KEY;
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const signIn = $<HTMLFormElement>('sign-in');
+  const email = $<HTMLInputElement>('email');
+  const password = $<HTMLInputElement>('password');
+  const confirmBox = $('confirm');
+  const deleteButton = $<HTMLButtonElement>('delete');
+  let token: string | null = null;
+
+  function say(id: string, text: string) {
+    const el = $(id);
+    el.textContent = text;
+    el.hidden = !text;
+  }
+
+  signIn.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = signIn.querySelector('button')!;
+    say('sign-in-msg', '');
+    button.disabled = true;
+    try {
+      const res = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { apikey: key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.value.trim(), password: password.value }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.access_token) {
+        say(
+          'sign-in-msg',
+          res.status === 429
+            ? 'Too many tries. Wait a minute, then try again.'
+            : res.status === 400
+              ? 'That email and password don’t match. Try again, or reset your password in the app.'
+              : 'Something went wrong. Try again in a moment.',
+        );
+        return;
+      }
+      token = body.access_token;
+      password.value = '';
+      $('who').textContent = email.value.trim();
+      signIn.hidden = true;
+      confirmBox.hidden = false;
+      deleteButton.focus();
+    } catch {
+      say('sign-in-msg', 'Couldn’t reach Chalkmates. Check your connection and try again.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  deleteButton.addEventListener('click', async () => {
+    say('confirm-msg', '');
+    deleteButton.disabled = true;
+    try {
+      const res = await fetch(`${url}/rest/v1/rpc/delete_account`, {
+        method: 'POST',
+        headers: { apikey: key, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!res.ok) {
+        say('confirm-msg', 'Your account couldn’t be deleted. Try again, or email us and we’ll do it for you.');
+        return;
+      }
+      token = null;
+      confirmBox.hidden = true;
+      $('done').hidden = false;
+    } catch {
+      say('confirm-msg', 'Couldn’t reach Chalkmates. Check your connection and try again.');
+    } finally {
+      deleteButton.disabled = false;
+    }
+  });
+
+  $('cancel').addEventListener('click', () => {
+    token = null;
+    confirmBox.hidden = true;
+    signIn.hidden = false;
+  });
+</script>

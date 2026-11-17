@@ -1,0 +1,34 @@
+---
+// One section body from privacy.ts: lines starting with "• " become a list, anything else a paragraph.
+// The contact address becomes a mailto link.
+import { PRIVACY_CONTACT } from '../content/privacy';
+
+interface Props {
+  body: string;
+}
+
+const lines = Astro.props.body.split('\n');
+const isList = lines.every((l) => l.startsWith('• '));
+const parts = (line: string) => line.split(PRIVACY_CONTACT);
+---
+
+{
+  isList ? (
+    <ul>
+      {lines.map((l) => (
+        <li>{l.slice(2)}</li>
+      ))}
+    </ul>
+  ) : (
+    lines.map((l) => (
+      <p>
+        {parts(l).map((p, i) => (
+          <>
+            {i > 0 && <a href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a>}
+            {p}
+          </>
+        ))}
+      </p>
+    ))
+  )
+}

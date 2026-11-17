@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import Scribble from '../components/Scribble.astro';
+---
+
+<Base
+  title="Chalkmates"
+  description="Draw on each other’s home screens. A chalkboard for couples and small groups that lands on their widget."
+  bodyClass="home"
+>
+  <Fragment slot="board">
+    <h1 class="chalk">Chalkmates</h1>
+    <Scribble />
+    <p class="sub">Draw on each other’s home screens.</p>
+    <span class="soon">Coming soon to Android and iPhone</span>
+  </Fragment>
+  <div class="links">
+    <a href="privacy/"><strong>Privacy policy</strong><span>What we store, who sees it and how to delete it.</span></a>
+    <a href="delete-account/"><strong>Delete your account</strong><span>In the app, or here with your email and password.</span></a>
+  </div>
+</Base>
